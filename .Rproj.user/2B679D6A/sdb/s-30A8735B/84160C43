@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "library(dplyr)\nlibrary(readr)\nlibrary(GA)\n\nload.data <- function(file_name) {\n  data <- read_csv(file_name, col_names = TRUE,\n                    col_types = list( col_number(),\n                                      col_number(),\n                                      col_number(),\n                                      col_number(),\n                                      col_number(),\n                                      col_number(),\n                                      col_number(),\n                                      col_number(),\n                                      col_number(),\n                                      col_number(),\n                                      col_number(),\n                                      col_integer()))\n  return(data)\n}\nredWine <- load.data(\"winequality/winequality-red.csv\")\nwhiteWine <- load.data(\"winequality/winequality-white.csv\")",
+    "created" : 1511895298747.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "689490793",
+    "id" : "84160C43",
+    "lastKnownWriteTime" : 1511901965,
+    "last_content_update" : 1511901965885,
+    "path" : "~/Documents/PW/MOW/Projekt/projekt.R",
+    "project_path" : "projekt.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
