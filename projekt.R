@@ -1,6 +1,7 @@
 library(dplyr)
 library(readr)
 library(GA)
+library(rpart)
 
 load.data <- function(file_name) {
   data <- read_csv(file_name, col_names = TRUE,
@@ -20,3 +21,6 @@ load.data <- function(file_name) {
 }
 redWine <- load.data("winequality/winequality-red.csv")
 whiteWine <- load.data("winequality/winequality-white.csv")
+v <- split(redWine, 1:2)
+redWineT <- v$`1`
+redWineV <- v$`2`
