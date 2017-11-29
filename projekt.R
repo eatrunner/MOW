@@ -24,3 +24,6 @@ whiteWine <- load.data("winequality/winequality-white.csv")
 v <- split(redWine, 1:2)
 redWineT <- v$`1`
 redWineV <- v$`2`
+v <- split(whiteWine, 1:2)
+whiteWineT <- v$`1`
+whiteWineV <- v$`2`
