@@ -3,7 +3,8 @@ library(readr)
 library(GA)
 library(rpart)
 
-load.data <- function(file_name) {
+load.data <- function(file_name)
+{
   data <- read_csv(file_name, col_names = TRUE,
                     col_types = list( col_number(),
                                       col_number(),
@@ -18,6 +19,80 @@ load.data <- function(file_name) {
                                       col_number(),
                                       col_integer()))
   return(data)
+}
+
+evaluate.precision <- function(fit, data)
+{
+  pred <- as.data.frame(table(predict(fit, data, type = "class")))
+  real <- as.data.frame(table(data$quality))
+  fails = 0
+  if (length(pred[,1]) > length(real[,1]))
+  {
+    j = 1
+    for (i in 1:length(pred[,1]))
+    {
+      if (array(pred[i,1]) < array(real[j,1]))
+      {
+        fails = fails + array(pred[i,2])
+        next
+      }
+      else if (array(pred[i,1]) == array(real[j,1]))
+      {
+        fails = fails + abs(array(pred[i,2]) - array(real[j,2]))
+        if (j < length(real[,1]))
+        {
+          j = j + 1
+        }
+      }
+      else if (array(pred[i,1]) > array(real[j,1]))
+      {
+        fails = fails + array(real[j,1])
+        while (array(pred[i,1]) <= array(real[j,1]))
+        {
+          if (j < length(real[,1]))
+          {
+            j = j + 1
+          }
+        }
+      }
+    }
+  }
+  else 
+  {
+    j = 1
+    for (i in 1:length(real[,1]))
+    {
+      if (array(real[i,1]) < array(pred[j,1]))
+      {
+        fails = fails + array(real[i,2])
+        next
+      }
+      else if (array(real[i,1]) == array(pred[j,1]))
+      {
+        fails = fails + abs(array(real[i,2]) - array(pred[j,2]))
+        if (j < length(pred[,1]))
+        {
+          j = j + 1
+        }
+      }
+      else if (array(real[i,1]) > array(pred[j,1]))
+      {
+        fails = fails + array(pred[j,1])
+        while (array(real[i,1]) <= array(pred[j,1]))
+        {
+          if (j < length(pred[,1]))
+          {
+            j = j + 1
+          }
+          else
+          {
+            break
+          }
+        }
+      }
+    }
+  }
+  return(fails/2)
 }
 redWine <- load.data("winequality/winequality-red.csv")
 whiteWine <- load.data("winequality/winequality-white.csv")
@@ -57,4 +132,9 @@ plot(whiteFit, uniform=TRUE,
 text(whiteFit, use.n=TRUE, all=TRUE, cex=.8)
 #predicting for verifing data sets
 print(table(predict(redFit, redWineV, type = "class")))
+print(table(redWineV$quality))
 print(table(predict(whiteFit, whiteWineV, type = "class")))
+print(table(whiteWineV$quality))
+#evaluating
+print(evaluate.precision(redFit, redWineV))
+print(evaluate.precision(whiteFit, whiteWineV))
