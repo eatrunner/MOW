@@ -3,23 +3,10 @@ library(readr)
 library(GA)
 library(rpart)
 
-load.data <- function(file_name)
-{
-  data <- read_csv(file_name, col_names = TRUE,
-                    col_types = list( col_number(),
-                                      col_number(),
-                                      col_number(),
-                                      col_number(),
-                                      col_number(),
-                                      col_number(),
-                                      col_number(),
-                                      col_number(),
-                                      col_number(),
-                                      col_number(),
-                                      col_number(),
-                                      col_integer()))
-  return(data)
-}
+# Pretty decision tree output
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
 
 evaluate.precision <- function(fit, data)
 {
@@ -94,8 +81,9 @@ evaluate.precision <- function(fit, data)
   }
   return(fails/2)
 }
-redWine <- load.data("winequality/winequality-red.csv")
-whiteWine <- load.data("winequality/winequality-white.csv")
+
+redWine <- read_csv("winequality/winequality-red.csv")
+whiteWine <- read_csv("winequality/winequality-white.csv")
 #spliting redWine into training and verifing data sets
 v <- split(redWine, 1:2)
 redWineT <- v$`1`
@@ -138,3 +126,9 @@ print(table(whiteWineV$quality))
 #evaluating
 print(evaluate.precision(redFit, redWineV))
 print(evaluate.precision(whiteFit, whiteWineV))
+
+# rattle package decision tree output
+fancyRpartPlot(redFit)
+fancyRpartPlot(whiteFit)
+
+
