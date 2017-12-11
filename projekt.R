@@ -130,5 +130,6 @@ print(evaluate.precision(whiteFit, whiteWineV))
 # rattle package decision tree output
 fancyRpartPlot(redFit)
 fancyRpartPlot(whiteFit)
-
-
+#another way of ploting
+rpart.plot(redFit)
+rpart.plot(whiteFit)
