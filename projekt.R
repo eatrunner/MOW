@@ -10,6 +10,7 @@ library(rattle)
 library(rpart.plot)
 library(RColorBrewer)
 
+# evaluate accuracy of decision tree for rpart library
 evaluate.accuracy <- function(fit, data)
 {
   pred <- as.data.frame(table(predict(fit, data, type = "class")))
@@ -84,6 +85,8 @@ evaluate.accuracy <- function(fit, data)
   return(length(data$quality) - fails/2)
 }
 
+# checks classification of decision tree and puts
+# class labels to leaves
 leafs.prediction <- function(tree, data)
 {
   # reseting every leaf
@@ -119,7 +122,7 @@ leafs.prediction <- function(tree, data)
       {
         if (is.null(node$children[["rNode"]]))
         {
-          if (is.null(node$children[["rLeaf"]])) # if lleaf does not exist
+          if (is.null(node$children[["rLeaf"]])) # if rleaf does not exist
           {
             node$AddChild("rLeaf", cl = c(0,0,0,0,0,0,0,0,0,0)) # create new leaf
           }
@@ -155,6 +158,7 @@ leafs.prediction <- function(tree, data)
   return(c("tree" = tree, "accuracy" = acc))
 }
 
+# randomly modifies tree
 modify.tree <- function(tree, data)
 {
   Pcut <- 0.5 # probability of removing node
@@ -200,6 +204,7 @@ modify.tree <- function(tree, data)
   return(tree)
 }
 
+# generate decision tree using genetic algorithm
 generate.with.genetic.algorithm <- function(data, desiredAccuracy)
 {
   N <- 20 # size of population
