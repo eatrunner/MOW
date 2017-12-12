@@ -161,11 +161,14 @@ leafs.prediction <- function(tree, data)
 # randomly modifies tree
 modify.tree <- function(tree, data)
 {
-  Pcut <- 0.5 # probability of removing node
+  Pcut <- 0.2 # probability of removing node
+  Pmod <- 0.3 # probability of modifying node
+  Pcre <- 1 - Pcut - Pmod # probability of creating node
   Pl <- 0.5 #probabilty of creating left node
   # find node to modify
   node <- tree$leaves[[as.integer(runif(1,1,length(tree$leaves) + 1))]]$parent
-  if (runif(1) < Pcut)
+  p <- runif(1)
+  if (p < Pcut)
   {
     # remove node
     node$RemoveChild("lLeaf")
@@ -180,6 +183,13 @@ modify.tree <- function(tree, data)
     {
       node$parent$RemoveChild(node$name)
     }
+  }
+  else if (p < Pmod)
+  {
+    # modify node
+    var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data)))])
+    val <- c(runif(1, min = min(data[as.character(var)], na.rm=T), max = max(data[as.character(var)], na.rm=T)))
+    node <- Node$new("lNode", var = var, val = val)
   }
   else
   {
