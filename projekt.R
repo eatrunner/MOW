@@ -207,8 +207,8 @@ modify.tree <- function(tree, data)
 # generate decision tree using genetic algorithm
 generate.with.genetic.algorithm <- function(data, desiredAccuracy)
 {
-  N <- 20 # size of population
-  M <- 100 # maximum number of iterations
+  N <- 2 # size of population
+  M <- 5 # maximum number of iterations
   #generate random population
   Population <- c()
   for (i in 1:N)
@@ -233,11 +233,11 @@ generate.with.genetic.algorithm <- function(data, desiredAccuracy)
       if (bestAcc > tmp$accuracy / length(data$quality))
       {
         bestAcc <- tmp$accuracy / length(data$quality)
+        best <- i
       }
       if (desiredAccuracy < bestAcc)
       {
-        print(i)
-        best <- i
+        print(best)
         break
       }
     }
@@ -248,10 +248,6 @@ generate.with.genetic.algorithm <- function(data, desiredAccuracy)
       print(j)
       break
     }
-  }
-  for (i in 1:N)
-  {
-    print(Population[[i]], "var", "val", "cl")
   }
   return(Population[[best]])
 }
@@ -309,4 +305,13 @@ rpart.plot(redFit)
 rpart.plot(whiteFit)
 
 # generating tree with genetic algorithm
-generate.with.genetic.algorithm(redWineT, 100)
+tred <- generate.with.genetic.algorithm(redWineT, 100)
+twhite <- generate.with.genetic.algorithm(whiteWineT, 100)
+print(tred, "var", "val", "cl")
+plot(tred)
+print(twhite, "var", "val", "cl")
+plot(twhite)
+
+#evaluating trees generated with genetic algorithm with verification data
+print(leafs.prediction(tred, redWineV))
+print(leafs.prediction(twhite, whiteWineV))
