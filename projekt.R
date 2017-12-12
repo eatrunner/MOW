@@ -134,8 +134,8 @@ leafs.prediction <- function(tree, data)
     }
   }
   # attach classes to leaves on the basis of the biggest count of each class
-  # and count how many fails in classification
-  fails <- 0
+  # calculates accuracy
+  acc <- 0
   for (leaf in tree$leaves)
   {
     maxCount <- 0
@@ -144,31 +144,32 @@ leafs.prediction <- function(tree, data)
     {
       if (maxCount < leaf$cl[[i]])
       {
-        fails <- fails + maxCount
         maxCount = leaf$cl[[i]]
         maxCl <- i
         next
       }
-      fails <- fails + leaf$cl[[i]]
     }
     leaf$cl <- maxCl
+    acc <- acc + maxCl
   }
-  return(c("tree" = tree, "fails" = fails))
+  return(c("tree" = tree, "accuracy" = acc))
 }
 
 modify.tree <- function(tree, data)
 {
+  Pcut <- 0.5 # probability of removing node
+  Pl <- 0.5 #probabilty of creating left node
   # find node to modify
   node <- tree$leaves[[as.integer(runif(1,1,length(tree$leaves) + 1))]]$parent
-  if (runif(1) < 0.5)
+  if (runif(1) < Pcut)
   {
     # remove node
     node$RemoveChild("lLeaf")
     node$RemoveChild("rLeaf")
     if (node$isRoot)
     {
-      var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data - 1)))])
-      val <- c(runif(1, min = min(data[var]), max = max(data[var])))
+      var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data)))])
+      val <- c(runif(1, min = min(data[as.character(var)], na.rm=T), max = max(data[as.character(var)], na.rm=T)))
       node <- Node$new("Node", var = var, val = val)
     }
     else
@@ -179,42 +180,43 @@ modify.tree <- function(tree, data)
   else
   {
     # create new node
-    if (runif(1) < 0.5) #create
+    if (runif(1) < Pl)
     {
       # create left node
       node$RemoveChild("lLeaf")
-      var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data - 1)))])
-      val <- c(runif(1, min = min(data[var]), max = max(data[var])))
+      var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data)))])
+      val <- c(runif(1, min = min(data[as.character(var)], na.rm=T), max = max(data[as.character(var)], na.rm=T)))
       node <- Node$new("lNode", var = var, val = val)
     }
     else
     {
       # create right node
       node$RemoveChild("rLeaf")
-      var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data - 1)))])
-      val <- c(runif(1, min = min(data[var]), max = max(data[var])))
+      var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data)))])
+      val <- c(runif(1, min = min(data[as.character(var)], na.rm=T), max = max(data[as.character(var)], na.rm=T)))
       node <- Node$new("rNode", var = var, val = val)
     }
   }
   return(tree)
 }
 
-generate.with.genetic.algorithm <- function(data, desiredMistake)
+generate.with.genetic.algorithm <- function(data, desiredAccuracy)
 {
-  N <- 3 # size of population
-  M <- 10 # maximum number of iterations
+  N <- 20 # size of population
+  M <- 100 # maximum number of iterations
   #generate random population
   Population <- c()
   for (i in 1:N)
   {
-    var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data - 1)))])
-    val <- c(runif(1, min = min(data[var]), max = max(data[var])))
+    var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data)))])
+    val <- c(runif(1, min = min(data[as.character(var)], na.rm=T), max = max(data[as.character(var)], na.rm=T)))
     Population <-c(Population, Node$new("Node", var = var, val = val))
     Population[[i]]  <- leafs.prediction(Population[[i]], data)$tree
   }
   # genetic algorithm loop
   tmp <- 0
-  best <- 100
+  best <- 0
+  bestAcc <- 100
   mist <- 0
   for (j in 1:M)
   {
@@ -223,19 +225,20 @@ generate.with.genetic.algorithm <- function(data, desiredMistake)
       Population[[i]] <- modify.tree(Population[[i]], data)
       tmp  <- leafs.prediction(Population[[i]], data)
       Population[[i]] <- tmp$tree
-      if (best > tmp$fails / length(data$quality))
+      if (bestAcc > tmp$accuracy / length(data$quality))
       {
-        best <- tmp$fails / length(data$quality)
+        bestAcc <- tmp$accuracy / length(data$quality)
       }
-      if (desiredMistake > best)
+      if (desiredAccuracy < bestAcc)
       {
         print(i)
+        best <- i
         break
       }
     }
-    mist[j] <- best
-    plot(mist, xlab="Iteracja",ylab="Blad klasyfikacji najlepszego osobnika",col="royalblue1",pch=16)
-    if (desiredMistake > best)
+    mist[j] <- bestAcc
+    plot(mist, xlab="Iteracja",ylab="Accuracy najlepszego osobnika",col="royalblue1",pch=16)
+    if (desiredAccuracy < bestAcc)
     {
       print(j)
       break
@@ -245,6 +248,7 @@ generate.with.genetic.algorithm <- function(data, desiredMistake)
   {
     print(Population[[i]], "var", "val", "cl")
   }
+  return(Population[[best]])
 }
 
 redWine <- read_csv("winequality/winequality-red.csv")
@@ -300,4 +304,4 @@ rpart.plot(redFit)
 rpart.plot(whiteFit)
 
 # generating tree with genetic algorithm
-generate.with.genetic.algorithm(whiteWineT, 0)
+generate.with.genetic.algorithm(redWineT, 100)
