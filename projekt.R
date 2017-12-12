@@ -2,13 +2,15 @@ library(dplyr)
 library(readr)
 library(GA)
 library(rpart)
+library(data.table)
+library(data.tree)
 
 # Pretty decision tree output
 library(rattle)
 library(rpart.plot)
 library(RColorBrewer)
 
-evaluate.precision <- function(fit, data)
+evaluate.accuracy <- function(fit, data)
 {
   pred <- as.data.frame(table(predict(fit, data, type = "class")))
   real <- as.data.frame(table(data$quality))
@@ -79,7 +81,116 @@ evaluate.precision <- function(fit, data)
       }
     }
   }
-  return(fails/2)
+  return(length(data$quality) - fails/2)
+}
+
+find.node <- function(tree, nr)
+{
+  for (i in 1:length(tree$var))
+  {
+    if (tree$nr[i] == nr)
+    {
+      return(i)
+    }
+  }
+  return(0)
+}
+
+leafs.prediction <- function(data, tree)
+{
+  for (i in 1:length(data$quality))
+  {
+    el <- data[i,]
+    node <- tree$root
+    # every element from data set is classified by tree
+    while (1)
+    {
+      if (el[node$var] < node$val)
+      {
+        if (is.null(node$children[["lNode"]]))
+        {
+          if (is.null(node$children[["lLeaf"]])) # if lleaf does not exist
+          {
+            node$AddChild("lLeaf", cl = c(0,0,0,0,0,0,0,0,0,0)) # create new leaf
+          }
+          node$children[["lLeaf"]]$cl[[el$quality]] <- node$children[["lLeaf"]]$cl[[el$quality]] + 1 # increment class counter
+          break
+        }
+        else
+        {
+          node <- node$children[["lNode"]] # go to next node
+        }
+      }
+      else
+      {
+        if (is.null(node$children[["rNode"]]))
+        {
+          if (is.null(node$children[["rLeaf"]])) # if lleaf does not exist
+          {
+            node$AddChild("rLeaf", cl = c(0,0,0,0,0,0,0,0,0,0)) # create new leaf
+          }
+          node$children[["rLeaf"]]$cl[[el$quality]] <- node$children[["rLeaf"]]$cl[[el$quality]] + 1
+          break
+        }
+        else
+        {
+          node <- node$children[["rNode"]] # go to next node
+        }
+      }
+    }
+  }
+  # attach classes to leaves on the basis of the biggest count of each class
+  # and count how many fails in classification
+  fails <- 0
+  for (leaf in tree$leaves)
+  {
+    maxCount <- 0
+    maxCl <- 0
+    for (i in 1:10)
+    {
+      if (maxCount < leaf$cl[[i]])
+      {
+        fails <- fails + maxCount
+        maxCount = leaf$cl[[i]]
+        maxCl <- i
+        next
+      }
+      fails <- fails + leaf$cl[[i]]
+    }
+    leaf$cl <- maxCl
+  }
+  return(c("tree" = tree, "fails" = fails))
+}
+
+generate.with.genetic.algorithm <- function(data, desiredMistake)
+{
+  N <- 3 # size of population
+  M <- 1 # maximum number of iterations
+  #generate random population
+  Population <- c()
+  for (i in 1:N)
+  {
+    nr <- c(1)
+    var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data - 1)))])
+    val <- c(runif(1, min = min(data[var]), max = max(data[var])))
+    Population <-c(Population, Node$new("Node", nr = nr, var = var, val = val))
+  }
+  print(as.data.frame(table(factor(Population$val))))
+  print(sort(table(factor(Population$yval)), decreasing = TRUE)[1])
+  # genetic algorithm loop
+  for (j in 1:M)
+  {
+    for (i in 1:N)
+    {
+      tmp  <- leafs.prediction(data, Population[[i]])
+      Population[[i]] <- tmp$tree
+      print(tmp$fails)
+    }
+  }
+  for (i in 1:N)
+  {
+    print(Population[[i]], "var", "val", "cl")
+  }
 }
 
 redWine <- read_csv("winequality/winequality-red.csv")
@@ -124,8 +235,8 @@ print(table(redWineV$quality))
 print(table(predict(whiteFit, whiteWineV, type = "class")))
 print(table(whiteWineV$quality))
 #evaluating
-print(evaluate.precision(redFit, redWineV))
-print(evaluate.precision(whiteFit, whiteWineV))
+print(evaluate.accuracy(redFit, redWineV))
+print(evaluate.accuracy(whiteFit, whiteWineV))
 
 # rattle package decision tree output
 fancyRpartPlot(redFit)
@@ -133,3 +244,6 @@ fancyRpartPlot(whiteFit)
 #another way of ploting
 rpart.plot(redFit)
 rpart.plot(whiteFit)
+
+# generating tree with genetic algorithm
+generate.with.genetic.algorithm(whiteWineT, 0)
