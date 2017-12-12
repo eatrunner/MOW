@@ -84,20 +84,14 @@ evaluate.accuracy <- function(fit, data)
   return(length(data$quality) - fails/2)
 }
 
-find.node <- function(tree, nr)
+leafs.prediction <- function(tree, data)
 {
-  for (i in 1:length(tree$var))
+  # reseting every leaf
+  for (leaf in tree$leaves)
   {
-    if (tree$nr[i] == nr)
-    {
-      return(i)
-    }
+    leaf$cl <- c(0,0,0,0,0,0,0,0,0,0)
   }
-  return(0)
-}
-
-leafs.prediction <- function(data, tree)
-{
+  
   for (i in 1:length(data$quality))
   {
     el <- data[i,]
@@ -162,29 +156,89 @@ leafs.prediction <- function(data, tree)
   return(c("tree" = tree, "fails" = fails))
 }
 
+modify.tree <- function(tree, data)
+{
+  # find node to modify
+  node <- tree$leaves[[as.integer(runif(1,1,length(tree$leaves) + 1))]]$parent
+  if (runif(1) < 0.5)
+  {
+    # remove node
+    node$RemoveChild("lLeaf")
+    node$RemoveChild("rLeaf")
+    if (node$isRoot)
+    {
+      var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data - 1)))])
+      val <- c(runif(1, min = min(data[var]), max = max(data[var])))
+      node <- Node$new("Node", var = var, val = val)
+    }
+    else
+    {
+      node$parent$RemoveChild(node$name)
+    }
+  }
+  else
+  {
+    # create new node
+    if (runif(1) < 0.5) #create
+    {
+      # create left node
+      node$RemoveChild("lLeaf")
+      var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data - 1)))])
+      val <- c(runif(1, min = min(data[var]), max = max(data[var])))
+      node <- Node$new("lNode", var = var, val = val)
+    }
+    else
+    {
+      # create right node
+      node$RemoveChild("rLeaf")
+      var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data - 1)))])
+      val <- c(runif(1, min = min(data[var]), max = max(data[var])))
+      node <- Node$new("rNode", var = var, val = val)
+    }
+  }
+  return(tree)
+}
+
 generate.with.genetic.algorithm <- function(data, desiredMistake)
 {
   N <- 3 # size of population
-  M <- 1 # maximum number of iterations
+  M <- 10 # maximum number of iterations
   #generate random population
   Population <- c()
   for (i in 1:N)
   {
-    nr <- c(1)
     var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data - 1)))])
     val <- c(runif(1, min = min(data[var]), max = max(data[var])))
-    Population <-c(Population, Node$new("Node", nr = nr, var = var, val = val))
+    Population <-c(Population, Node$new("Node", var = var, val = val))
+    Population[[i]]  <- leafs.prediction(Population[[i]], data)$tree
   }
-  print(as.data.frame(table(factor(Population$val))))
-  print(sort(table(factor(Population$yval)), decreasing = TRUE)[1])
   # genetic algorithm loop
+  tmp <- 0
+  best <- 100
+  mist <- 0
   for (j in 1:M)
   {
     for (i in 1:N)
     {
-      tmp  <- leafs.prediction(data, Population[[i]])
+      Population[[i]] <- modify.tree(Population[[i]], data)
+      tmp  <- leafs.prediction(Population[[i]], data)
       Population[[i]] <- tmp$tree
-      print(tmp$fails)
+      if (best > tmp$fails / length(data$quality))
+      {
+        best <- tmp$fails / length(data$quality)
+      }
+      if (desiredMistake > best)
+      {
+        print(i)
+        break
+      }
+    }
+    mist[j] <- best
+    plot(mist, xlab="Iteracja",ylab="Blad klasyfikacji najlepszego osobnika",col="royalblue1",pch=16)
+    if (desiredMistake > best)
+    {
+      print(j)
+      break
     }
   }
   for (i in 1:N)
