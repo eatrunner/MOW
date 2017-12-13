@@ -171,8 +171,14 @@ modify.tree <- function(tree, data)
   if (p < Pcut)
   {
     # remove node
-    node$RemoveChild("lLeaf")
-    node$RemoveChild("rLeaf")
+    if (!is.null(node$children[["lLeaf"]]))
+    {
+      node$RemoveChild("lLeaf")
+    }
+    if (!is.null(node$children[["rLeaf"]]))
+    {
+      node$RemoveChild("rLeaf")
+    }
     if (node$isRoot)
     {
       var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data)))])
@@ -197,7 +203,10 @@ modify.tree <- function(tree, data)
     if (runif(1) < Pl)
     {
       # create left node
-      node$RemoveChild("lLeaf")
+      if (!is.null(node$children[["lLeaf"]]))
+      {
+        node$RemoveChild("lLeaf")
+      }
       var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data)))])
       val <- c(runif(1, min = min(data[as.character(var)], na.rm=T), max = max(data[as.character(var)], na.rm=T)))
       node <- Node$new("lNode", var = var, val = val)
@@ -205,7 +214,10 @@ modify.tree <- function(tree, data)
     else
     {
       # create right node
-      node$RemoveChild("rLeaf")
+      if (!is.null(node$children[["rLeaf"]]))
+      {
+        node$RemoveChild("rLeaf")
+      }
       var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data)))])
       val <- c(runif(1, min = min(data[as.character(var)], na.rm=T), max = max(data[as.character(var)], na.rm=T)))
       node <- Node$new("rNode", var = var, val = val)
@@ -214,11 +226,32 @@ modify.tree <- function(tree, data)
   return(tree)
 }
 
+selector <- function(population, newpopulation, data)
+{
+  pop <- c(population, newpopulation)
+  acc <- vector(mode = "integer", length = length(pop))
+  ind <- 1:length(pop)
+  f <- data.frame(ind, acc)
+  for (i in 1:length(pop))
+  {
+    r <- leafs.prediction(pop[[i]], data)
+    f$acc[[i]] <- r$accuracy / length(data$quality)
+    pop [[i]] <- r$tree
+  }
+  fo <- f[order(-acc),]
+  retPop <- c()
+  for (i in 1:length(population))
+  {
+    retPop <- c(retPop, pop[[fo$ind[[i]]]])
+  }
+  return(c("population" = retPop, "bestAcc" = fo$acc[[1]]))
+}
+
 # generate decision tree using genetic algorithm
 generate.with.genetic.algorithm <- function(data, desiredAccuracy)
 {
-  N <- 2 # size of population
-  M <- 5 # maximum number of iterations
+  N <- 5 # size of population
+  M <- 10 # maximum number of iterations
   #generate random population
   Population <- c()
   for (i in 1:N)
@@ -233,31 +266,27 @@ generate.with.genetic.algorithm <- function(data, desiredAccuracy)
   best <- 0
   bestAcc <- 100
   mist <- 0
+  NewPopulation <- c()
   for (j in 1:M)
   {
     for (i in 1:N)
     {
-      Population[[i]] <- modify.tree(Population[[i]], data)
-      tmp  <- leafs.prediction(Population[[i]], data)
-      Population[[i]] <- tmp$tree
-      if (bestAcc > tmp$accuracy / length(data$quality))
-      {
-        bestAcc <- tmp$accuracy / length(data$quality)
-        best <- i
-      }
-      if (desiredAccuracy < bestAcc)
-      {
-        print(best)
-        break
-      }
+      NewPopulation[[i]] <- modify.tree(Population[[i]], data)
     }
-    mist[j] <- bestAcc
+    r <- selector(Population, NewPopulation, data)
+    for (i in 1:N)
+    {
+      Population[[i]] <- r[[i]]
+    }
+    mist[j] <- r$bestAcc
+    best <- 1
     plot(mist, xlab="Iteracja",ylab="Accuracy najlepszego osobnika",col="royalblue1",pch=16)
-    if (desiredAccuracy < bestAcc)
+    if (desiredAccuracy < r$bestAcc)
     {
       print(j)
       break
     }
+    
   }
   return(Population[[best]])
 }
