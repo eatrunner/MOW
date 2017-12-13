@@ -230,15 +230,18 @@ selector <- function(population, newpopulation, data)
 {
   pop <- c(population, newpopulation)
   acc <- vector(mode = "integer", length = length(pop))
-  ind <- 1:length(pop)
+  ind <- 1:length(pop) # indexes trees in population
   f <- data.frame(ind, acc)
+  # evaluates accuracy
   for (i in 1:length(pop))
   {
     r <- leafs.prediction(pop[[i]], data)
     f$acc[[i]] <- r$accuracy / length(data$quality)
     pop [[i]] <- r$tree
   }
+  # sort
   fo <- f[order(-acc),]
+  #create final population to return
   retPop <- c()
   for (i in 1:length(population))
   {
@@ -247,8 +250,8 @@ selector <- function(population, newpopulation, data)
   return(c("population" = retPop, "bestAcc" = fo$acc[[1]]))
 }
 
-# generate decision tree using genetic algorithm
-generate.with.genetic.algorithm <- function(data, desiredAccuracy)
+# generate decision tree using evolution algorithm
+generate.with.evolution.algorithm <- function(data, desiredAccuracy)
 {
   N <- 5 # size of population
   M <- 10 # maximum number of iterations
@@ -261,7 +264,7 @@ generate.with.genetic.algorithm <- function(data, desiredAccuracy)
     Population <-c(Population, Node$new("Node", var = var, val = val))
     Population[[i]]  <- leafs.prediction(Population[[i]], data)$tree
   }
-  # genetic algorithm loop
+  # evolution algorithm loop
   tmp <- 0
   best <- 0
   bestAcc <- 100
@@ -343,14 +346,14 @@ fancyRpartPlot(whiteFit)
 rpart.plot(redFit)
 rpart.plot(whiteFit)
 
-# generating tree with genetic algorithm
-tred <- generate.with.genetic.algorithm(redWineT, 100)
-twhite <- generate.with.genetic.algorithm(whiteWineT, 100)
+# generating tree with evolution algorithm
+tred <- generate.with.evolution.algorithm(redWineT, 100)
+twhite <- generate.with.evolution.algorithm(whiteWineT, 100)
 print(tred, "var", "val", "cl")
 plot(tred)
 print(twhite, "var", "val", "cl")
 plot(twhite)
 
-#evaluating trees generated with genetic algorithm with verification data
+#evaluating trees generated with evolution algorithm with verification data
 print(leafs.prediction(tred, redWineV))
 print(leafs.prediction(twhite, whiteWineV))
