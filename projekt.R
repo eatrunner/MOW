@@ -241,9 +241,6 @@ selector <- function(population, newpopulation, data)
   }
   # sort
   dfo <- df[order(-df$acc),]
-  print("_________________")
-  print(df)
-  print(dfo)
   #create final population to return
   retPop <- population
   for (i in 1:length(population))
