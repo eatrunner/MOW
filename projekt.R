@@ -161,8 +161,8 @@ leafs.prediction <- function(tree, data)
 # randomly modifies tree
 modify.tree <- function(tree, data)
 {
-  Pcut <- 0.2 # probability of removing node
-  Pmod <- 0.3 # probability of modifying node
+  Pcut <- 0.1 # probability of removing node
+  Pmod <- 0.1 # probability of modifying node
   Pcre <- 1 - Pcut - Pmod # probability of creating node
   Pl <- 0.5 #probabilty of creating left node
   # find node to modify
@@ -190,7 +190,7 @@ modify.tree <- function(tree, data)
       node$parent$RemoveChild(node$name)
     }
   }
-  else if (p < Pmod)
+  else if (p < Pcut + Pmod)# beacuse Pcut< p < Pmod
   {
     # modify node
     var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data)))])
@@ -209,7 +209,7 @@ modify.tree <- function(tree, data)
       }
       var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data)))])
       val <- c(runif(1, min = min(data[as.character(var)], na.rm=T), max = max(data[as.character(var)], na.rm=T)))
-      node <- Node$new("lNode", var = var, val = val)
+      node$AddChildNode(Node$new("lNode", var = var, val = val))
     }
     else
     {
@@ -220,7 +220,7 @@ modify.tree <- function(tree, data)
       }
       var <- c(attributes(data)$names[as.integer(runif(1, min = 1, max = length(data)))])
       val <- c(runif(1, min = min(data[as.character(var)], na.rm=T), max = max(data[as.character(var)], na.rm=T)))
-      node <- Node$new("rNode", var = var, val = val)
+      node$AddChildNode(Node$new("rNode", var = var, val = val))
     }
   }
   return(tree)
@@ -231,23 +231,26 @@ selector <- function(population, newpopulation, data)
   pop <- c(population, newpopulation)
   acc <- vector(mode = "integer", length = length(pop))
   ind <- 1:length(pop) # indexes trees in population
-  f <- data.frame(ind, acc)
+  df <- data.frame(ind, acc)
   # evaluates accuracy
   for (i in 1:length(pop))
   {
     r <- leafs.prediction(pop[[i]], data)
-    f$acc[[i]] <- r$accuracy / length(data$quality)
+    df$acc[[i]] <- r$accuracy / length(data$quality)
     pop [[i]] <- r$tree
   }
   # sort
-  fo <- f[order(-acc),]
+  dfo <- df[order(-df$acc),]
+  print("_________________")
+  print(df)
+  print(dfo)
   #create final population to return
-  retPop <- c()
+  retPop <- population
   for (i in 1:length(population))
   {
-    retPop <- c(retPop, pop[[fo$ind[[i]]]])
+    retPop[[i]] <- Clone(pop[[dfo$ind[[i]]]])
   }
-  return(c("population" = retPop, "bestAcc" = fo$acc[[1]]))
+  return(c("population" = retPop, "bestAcc" = dfo$acc[[1]]))
 }
 
 # generate decision tree using evolution algorithm
@@ -274,12 +277,13 @@ generate.with.evolution.algorithm <- function(data, desiredAccuracy)
   {
     for (i in 1:N)
     {
-      NewPopulation[[i]] <- modify.tree(Population[[i]], data)
+      NewPopulation[[i]] <- Clone(Population[[i]])
+      modify.tree(NewPopulation[[i]], data)
     }
     r <- selector(Population, NewPopulation, data)
     for (i in 1:N)
     {
-      Population[[i]] <- r[[i]]
+      Population[[i]] <- Clone(r[[i]])
     }
     mist[j] <- r$bestAcc
     best <- 1
@@ -355,5 +359,5 @@ print(twhite, "var", "val", "cl")
 plot(twhite)
 
 #evaluating trees generated with evolution algorithm with verification data
-print(leafs.prediction(tred, redWineV))
-print(leafs.prediction(twhite, whiteWineV))
+print(leafs.prediction(tred, redWineV)$accuracy)
+print(leafs.prediction(twhite, whiteWineV)$accuracy)
