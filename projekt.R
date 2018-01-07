@@ -4,6 +4,8 @@ library(GA)
 library(rpart)
 library(data.table)
 library(data.tree)
+library(foreach)
+library(doParallel)
 
 # Pretty decision tree output
 library(rattle)
@@ -233,12 +235,17 @@ selector <- function(population, newpopulation, data)
   ind <- 1:length(pop) # indexes trees in population
   df <- data.frame(ind, acc)
   # evaluates accuracy
+  no_cores <- detectCores() - 1
+  cl<-makeCluster(no_cores)
+  registerDoParallel(cl)
+  r <- foreach (tree = pop,.combine = c, .export = "leafs.prediction") %dopar%  
+    leafs.prediction(tree, data)
   for (i in 1:length(pop))
   {
-    r <- leafs.prediction(pop[[i]], data)
-    df$acc[[i]] <- r$accuracy / length(data$quality)
-    pop [[i]] <- r$tree
+    df$acc[[i]] <- r[[2*i]] / length(data$quality)
+    pop [[i]] <- r[[2*i-1]]
   }
+  stopCluster(cl)
   # sort
   dfo <- df[order(-df$acc),]
   #create final population to return
@@ -253,6 +260,8 @@ selector <- function(population, newpopulation, data)
 # generate decision tree using evolution algorithm
 generate.with.evolution.algorithm <- function(data, desiredAccuracy)
 {
+  start.time <- Sys.time()
+  
   N <- 5 # size of population
   M <- 10 # maximum number of iterations
   #generate random population
@@ -292,6 +301,9 @@ generate.with.evolution.algorithm <- function(data, desiredAccuracy)
     }
     
   }
+  end.time <- Sys.time()
+  time.taken <- end.time - start.time
+  print(time.taken)
   return(Population[[best]])
 }
 
