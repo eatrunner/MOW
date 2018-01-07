@@ -368,5 +368,5 @@ print(twhite, "var", "val", "cl")
 plot(twhite)
 
 #evaluating trees generated with evolution algorithm with verification data
-print(leafs.prediction(tred, redWineV)$accuracy)
-print(leafs.prediction(twhite, whiteWineV)$accuracy)
+print(leafs.prediction(tred, redWineV)$accuracy / length(redWine$quality))
+print(leafs.prediction(twhite, whiteWineV)$accuracy / length(redWine$quality))
