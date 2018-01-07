@@ -253,6 +253,7 @@ selector <- function(population, newpopulation, data)
 # generate decision tree using evolution algorithm
 generate.with.evolution.algorithm <- function(data, desiredAccuracy)
 {
+  start.time <- Sys.time()
   N <- 5 # size of population
   M <- 10 # maximum number of iterations
   #generate random population
@@ -292,6 +293,9 @@ generate.with.evolution.algorithm <- function(data, desiredAccuracy)
     }
     
   }
+  end.time <- Sys.time()
+  time.taken <- end.time - start.time
+  print(time.taken)
   return(Population[[best]])
 }
 
@@ -356,5 +360,5 @@ print(twhite, "var", "val", "cl")
 plot(twhite)
 
 #evaluating trees generated with evolution algorithm with verification data
-print(leafs.prediction(tred, redWineV)$accuracy)
-print(leafs.prediction(twhite, whiteWineV)$accuracy)
+print(leafs.prediction(tred, redWineV)$accuracy / length(redWineV$quality))
+print(leafs.prediction(twhite, whiteWineV)$accuracy / length(whiteWineV$quality))
