@@ -14,76 +14,24 @@ library(doParallel)
 #' @export
 evaluate.accuracy <- function(fit, data)
 {
-  pred <- as.data.frame(table(predict(fit, data, type = "class")))
-  real <- as.data.frame(table(data$quality))
   fails = 0
-  if (length(pred[,1]) > length(real[,1]))
+  for (i in 1:length(data$quality))
   {
-    j = 1
-    for (i in 1:length(pred[,1]))
+    pred <- as.data.frame(table(predict(fit, data[i,], type = "class")))
+    real <- as.data.frame(table(data$quality[[i]]))
+    for (j in 1:length(pred$Freq))
     {
-      if (array(pred[i,1]) < array(real[j,1]))
+      if (array(pred$Freq[[j]]) == 1)
       {
-        fails = fails + array(pred[i,2])
-        next
-      }
-      else if (array(pred[i,1]) == array(real[j,1]))
-      {
-        fails = fails + abs(array(pred[i,2]) - array(real[j,2]))
-        if (j < length(real[,1]))
+        if (array(pred$Var1[[j]]) != array(real$Var1))
         {
-          j = j + 1
+          fails = fails + 1
         }
-      }
-      else if (array(pred[i,1]) > array(real[j,1]))
-      {
-        fails = fails + array(real[j,1])
-        while (array(pred[i,1]) <= array(real[j,1]))
-        {
-          if (j < length(real[,1]))
-          {
-            j = j + 1
-          }
-        }
+        break
       }
     }
   }
-  else 
-  {
-    j = 1
-    for (i in 1:length(real[,1]))
-    {
-      if (array(real[i,1]) < array(pred[j,1]))
-      {
-        fails = fails + array(real[i,2])
-        next
-      }
-      else if (array(real[i,1]) == array(pred[j,1]))
-      {
-        fails = fails + abs(array(real[i,2]) - array(pred[j,2]))
-        if (j < length(pred[,1]))
-        {
-          j = j + 1
-        }
-      }
-      else if (array(real[i,1]) > array(pred[j,1]))
-      {
-        fails = fails + array(pred[j,1])
-        while (array(real[i,1]) <= array(pred[j,1]))
-        {
-          if (j < length(pred[,1]))
-          {
-            j = j + 1
-          }
-          else
-          {
-            break
-          }
-        }
-      }
-    }
-  }
-  return(length(data$quality) - fails/2)
+  return((length(data$quality) - fails) / length(data$quality))
 }
 
 # Checks classification of decision tree and puts
@@ -162,9 +110,9 @@ leafs.prediction <- function(tree, data)
       }
     }
     leaf$cl <- maxCl
-    acc <- acc + maxCl
+    acc <- acc + maxCount
   }
-  return(c("tree" = tree, "accuracy" = acc))
+  return(c("tree" = tree, "accuracy" = acc / length(data$quality)))
 }
 
 # Randomly modifies tree
@@ -265,7 +213,7 @@ selector <- function(population, newpopulation, data)
     leafs.prediction(tree, data)
   for (i in 1:length(pop))
   {
-    df$acc[[i]] <- r[[2*i]] / length(data$quality)
+    df$acc[[i]] <- r[[2*i]]
     pop [[i]] <- r[[2*i-1]]
   }
   stopCluster(cl)
@@ -291,7 +239,7 @@ selector <- function(population, newpopulation, data)
 #' @export
 generate.with.evolution.algorithm <- function(data, desiredAccuracy)
 {
-  N <- 2 # size of population
+  N <- 5 # size of population
   M <- 10 # maximum number of iterations
   #generate random population
   Population <- c()
@@ -327,7 +275,11 @@ generate.with.evolution.algorithm <- function(data, desiredAccuracy)
       print(j)
       break
     }
-    
+    plot(mist,
+         xlab="Iteracja",
+         ylab="Accuracy najlepszego osobnika",
+         col="royalblue1",
+         pch=16)
   }
   plot(mist,
        xlab="Iteracja",

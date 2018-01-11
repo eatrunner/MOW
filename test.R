@@ -8,8 +8,8 @@ library(rattle)
 library(rpart.plot)
 library(RColorBrewer)
 
-redWine <- read_csv("../data/winequality-red.csv")
-whiteWine <- read_csv("../data/winequality-white.csv")
+redWine <- read_csv("projektMOW/data/winequality-red.csv")
+whiteWine <- read_csv("projektMOW/data/winequality-white.csv")
 #spliting redWine into training and verifing data sets
 v <- split(redWine, 1:2)
 redWineT <- v$`1`
