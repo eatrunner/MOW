@@ -239,7 +239,7 @@ selector <- function(population, newpopulation, data)
 #' @export
 generate.with.evolution.algorithm <- function(data, desiredAccuracy)
 {
-  N <- 5 # size of population
+  N <- 60 # size of population
   M <- 10 # maximum number of iterations
   #generate random population
   Population <- c()
@@ -270,7 +270,7 @@ generate.with.evolution.algorithm <- function(data, desiredAccuracy)
     }
     mist[j] <- r$bestAcc
     best <- 1
-    if (desiredAccuracy < r$bestAcc)
+    if (desiredAccuracy <= r$bestAcc)
     {
       print(j)
       break
