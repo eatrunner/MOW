@@ -201,30 +201,54 @@ modify.tree <- function(tree, data)
 #' @export
 selector <- function(population, newpopulation, data)
 {
-  pop <- c(population, newpopulation)
-  acc <- vector(mode = "integer", length = length(pop))
-  ind <- 1:length(pop) # indexes trees in population
-  df <- data.frame(ind, acc)
+  oldpopulation <- attr(selector, "prevpop")
+  if (is.null(oldpopulation)) {
+    oldpopulation <- population
+  }
+  oldacc <- attr(selector, "prevacc")
+  if (is.null(oldacc)) {
+    oldacc <- 0
+    # evaluates accuracy
+    no_cores <- detectCores() - 1
+    cl<-makeCluster(no_cores)
+    registerDoParallel(cl)
+    r <- foreach (tree = oldpopulation,.combine = c, .export = "leafs.prediction") %dopar%  
+      leafs.prediction(tree, data)
+    for (i in 1:length(population))
+    {
+      oldacc[[i]] <- r[[2*i]]
+      oldpopulation [[i]] <- r[[2*i-1]]
+    }
+    stopCluster(cl)
+  }
+  acc <- vector(mode = "integer", length = length(newpopulation))
   # evaluates accuracy
   no_cores <- detectCores() - 1
   cl<-makeCluster(no_cores)
   registerDoParallel(cl)
-  r <- foreach (tree = pop,.combine = c, .export = "leafs.prediction") %dopar%  
+  r <- foreach (tree = newpopulation,.combine = c, .export = "leafs.prediction") %dopar%  
     leafs.prediction(tree, data)
-  for (i in 1:length(pop))
+  for (i in 1:length(newpopulation))
   {
-    df$acc[[i]] <- r[[2*i]]
-    pop [[i]] <- r[[2*i-1]]
+    acc[[i]] <- r[[2*i]]
+    newpopulation [[i]] <- r[[2*i-1]]
   }
   stopCluster(cl)
+  pop <- c(oldpopulation, newpopulation)
+  ind <- 1:length(pop) # indexes trees in population
+  acc <- c(oldacc, acc)
+  df <- data.frame(ind, acc)
   # sort
-  dfo <- df[order(-df$acc),]
+  dfo <- df[order(df$acc, decreasing = TRUE),]
   #create final population to return
-  retPop <- population
-  for (i in 1:length(population))
+  retPop <- oldpopulation
+  for (i in 1:length(oldpopulation))
   {
     retPop[[i]] <- Clone(pop[[dfo$ind[[i]]]])
+    oldacc[[i]] <- dfo$acc[[i]]
   }
+  attr(selector, "prevpop") <- retPop
+  attr(selector, "prevacc") <- oldacc
   return(c("population" = retPop, "bestAcc" = dfo$acc[[1]]))
 }
 
@@ -239,8 +263,9 @@ selector <- function(population, newpopulation, data)
 #' @export
 generate.with.evolution.algorithm <- function(data, desiredAccuracy)
 {
-  N <- 60 # size of population
-  M <- 10 # maximum number of iterations
+  attributes(selector) <- list(prevpop = 0, prevacc = 0)
+  N <- 10 # size of population
+  M <- 5 # maximum number of iterations
   #generate random population
   Population <- c()
   for (i in 1:N)

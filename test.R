@@ -61,10 +61,18 @@ rpart.plot(redFit)
 rpart.plot(whiteFit)
 
 # generating tree with evolution algorithm
+start.time <- Sys.time()
 tred <- generate.with.evolution.algorithm(redWineT, 100)
+end.time <- Sys.time()
+time.taken <- end.time - start.time
+print(time.taken)
 print(tred, "var", "val", "cl")
 plot(tred)
+start.time <- Sys.time()
 twhite <- generate.with.evolution.algorithm(whiteWineT, 100)
+end.time <- Sys.time()
+time.taken <- end.time - start.time
+print(time.taken)
 print(twhite, "var", "val", "cl")
 plot(twhite)
 
