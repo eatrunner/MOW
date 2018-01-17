@@ -43,22 +43,22 @@ summary(whiteFit) # detailed summary of splits
 # plot tree
 plot(whiteFit, uniform=TRUE,
      main="Classification Tree for white wine quality")
-text(whiteFit, use.n=TRUE, all=TRUE, cex=.8)
+#text(whiteFit, use.n=TRUE, all=TRUE, cex=.8)
 #predicting for verifing data sets
-print(table(predict(redFit, redWineV, type = "class")))
-print(table(redWineV$quality))
-print(table(predict(whiteFit, whiteWineV, type = "class")))
-print(table(whiteWineV$quality))
+#print(table(predict(redFit, redWineV, type = "class")))
+#print(table(redWineV$quality))
+#print(table(predict(whiteFit, whiteWineV, type = "class")))
+#print(table(whiteWineV$quality))
 #evaluating
-print(evaluate.accuracy(redFit, redWineV))
-print(evaluate.accuracy(whiteFit, whiteWineV))
+#print(evaluate.accuracy(redFit, redWineV))
+#print(evaluate.accuracy(whiteFit, whiteWineV))
 
 # rattle package decision tree output
-fancyRpartPlot(redFit)
-fancyRpartPlot(whiteFit)
+#fancyRpartPlot(redFit)
+#fancyRpartPlot(whiteFit)
 #another way of ploting
-rpart.plot(redFit)
-rpart.plot(whiteFit)
+#rpart.plot(redFit)
+#rpart.plot(whiteFit)
 
 # generating tree with evolution algorithm
 start.time <- Sys.time()

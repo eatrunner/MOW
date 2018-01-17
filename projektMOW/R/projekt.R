@@ -189,6 +189,22 @@ modify.tree <- function(tree, data)
   }
   return(tree)
 }
+# Tournament
+#' 
+#' \code{tournament}Tournament of individuals
+#' 
+#' @param it iterator
+#' @param df dataframe
+#' @return winner of tournament
+#' @export
+tournament <- function(it, df)
+{
+  S <- 2 # tournament size
+  v <- as.integer(runif(S, min = 1, max = length(df[,1])))
+  sdf <- df[v,]
+  sdf <- sdf[order(sdf$acc, decreasing = TRUE),]
+  return(c("ind" = sdf$ind[[1]], "acc" = sdf$acc[[1]]))
+}
 # Selector of evolution algorithm
 #' 
 #' \code{selector} Selects the best individuals from population
@@ -233,20 +249,27 @@ selector <- function(population, newpopulation, data)
     acc[[i]] <- r[[2*i]]
     newpopulation [[i]] <- r[[2*i-1]]
   }
-  stopCluster(cl)
   pop <- c(oldpopulation, newpopulation)
-  ind <- 1:length(pop) # indexes trees in population
+  ind <- 1:length(pop) # tree indexes in population
   acc <- c(oldacc, acc)
   df <- data.frame(ind, acc)
   # sort
   dfo <- df[order(df$acc, decreasing = TRUE),]
+  r <- foreach (count = 1:length(oldpopulation),.combine = c, .export = "tournament") %dopar%  
+    tournament(count,dfo)
+  #r <- c()
+  #for(i in 1:length(oldpopulation))
+  #{
+    #r <- c(r,tournament(i, dfo))
+  #}
   #create final population to return
   retPop <- oldpopulation
   for (i in 1:length(oldpopulation))
   {
-    retPop[[i]] <- Clone(pop[[dfo$ind[[i]]]])
-    oldacc[[i]] <- dfo$acc[[i]]
+    retPop[[i]] <- Clone(pop[[r[[2*i-1]]]])
+    oldacc[[i]] <- r[[2*i]]
   }
+  stopCluster(cl)
   attr(selector, "prevpop") <- retPop
   attr(selector, "prevacc") <- oldacc
   return(c("population" = retPop, "bestAcc" = dfo$acc[[1]]))
@@ -263,9 +286,9 @@ selector <- function(population, newpopulation, data)
 #' @export
 generate.with.evolution.algorithm <- function(data, desiredAccuracy)
 {
-  attributes(selector) <- list(prevpop = 0, prevacc = 0)
+  attributes(selector) <- list(prevpop = NULL, prevacc = NULL)
   N <- 10 # size of population
-  M <- 5 # maximum number of iterations
+  M <- 10 # maximum number of iterations
   #generate random population
   Population <- c()
   for (i in 1:N)
