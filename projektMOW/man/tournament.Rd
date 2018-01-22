@@ -12,7 +12,7 @@ enables parallel excecution of tournament
 
 \item{df}{dataframe}
 {
-dataframe with columns accuracy and index of each individual from population
+dataframe with columns containing accuracy and index of each individual from population
 }
 }
 \value{
