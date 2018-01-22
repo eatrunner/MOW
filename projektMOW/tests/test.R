@@ -1,3 +1,5 @@
+# testy do algorytmu ewolucyjnego według dokumentacji końcowej
+# Autorzy: Barłomiej Kunikowki, Karol Niedzielewski
 library(readr)
 library(rpart)
 library(data.table)

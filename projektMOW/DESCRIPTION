@@ -2,9 +2,9 @@ Package: projektMOW
 Type: Package
 Title: Pakiet wykonujacy projekt na przedmiot Metody Odkrywania Wiedzy
 Version: 1.0
-Date: 2018-01-10
+Date: 2018-01-22
 Author: Bartlomiej Kunikowski, Karol Niedzielewski
-Maintainer: Who to complain to <yourfault@somewhere.net>
+Maintainer: Bartlomiej Kunikowski, Karol Niedzielewski <kniedzie@mion.elka.pw.edu.pl>
 Depends: R (>= 3.4.0), data.table, data.tree, foreach, doParallel
 Description: Tworzenie drzewa decyzyjnego przy pomocy algorytmu ewolucyjnego.
 License: GPL (>= 2)

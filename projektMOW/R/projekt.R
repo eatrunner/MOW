@@ -1,3 +1,5 @@
+# Pakiet do generowania drzew algorytmem genetycznym
+# Autorzy: Barłomiej Kunikowki, Karol Niedzielewski
 library(data.table)
 library(data.tree)
 library(foreach)
@@ -287,8 +289,8 @@ selector <- function(population, newpopulation, data)
 generate.with.evolution.algorithm <- function(data, desiredAccuracy)
 {
   attributes(selector) <- list(prevpop = NULL, prevacc = NULL)
-  N <- 10 # size of population
-  M <- 10 # maximum number of iterations
+  N <- 2 # size of population
+  M <- 2 # maximum number of iterations
   #generate random population
   Population <- c()
   for (i in 1:N)
